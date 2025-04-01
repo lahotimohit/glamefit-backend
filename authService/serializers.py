@@ -6,6 +6,9 @@ from .models import User, OTPVerification
 from .utils import get_tokens_for_user
 import random
 
+class GoogleAuthSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
