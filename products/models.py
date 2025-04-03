@@ -1,4 +1,5 @@
 from django.db import models
+from authService.models import User 
 from uuid import uuid4
 
 class Product(models.Model):
@@ -13,3 +14,15 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_display_name
+
+
+class Wishlist(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist')
+    quantity = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.username + " - " + self.product.product_display_name
