@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed 
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail
 from .models import User, OTPVerification, BillingDetails
 from .utils import get_tokens_for_user
@@ -94,3 +95,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name','last_name','email','phone', 'billing','isVerified',]
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("Passwords do not match.")
+        return data
