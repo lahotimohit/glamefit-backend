@@ -1,5 +1,5 @@
 from django.db import models
-from authService.models import User 
+from django.conf import settings
 from uuid import uuid4
 
 class Product(models.Model):
@@ -18,7 +18,7 @@ class Product(models.Model):
 
 class Wishlist(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wishlist')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlist')
     quantity = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)

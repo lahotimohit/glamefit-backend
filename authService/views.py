@@ -134,7 +134,9 @@ class BillingDetailsAPIView(APIView):
     def post(self, request):
         serializer=serializers.BillingDetailsSerailizer(data=request.data, context={'user':request.user})
         if serializer.is_valid(raise_exception=True):
-            serializer.save(user=request.user)
+            billing_detail = serializer.save(user=request.user)
+            request.user.default_billing_address = billing_detail
+            request.user.save(update_fields=['default_billing_address'])
             return Response({"message": "Details saved successfully...."}, status=201)
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     

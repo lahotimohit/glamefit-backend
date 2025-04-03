@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
+from order.models import BillingDetails
 from django.utils.timezone import now
+from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser
 
@@ -12,6 +14,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, blank=False, null=False)
     phone = models.CharField(max_length=13, unique=True)
     isVerified = models.BooleanField(default=False)
+    default_billing_address = models.ForeignKey(BillingDetails, on_delete=models.CASCADE, related_name="billing", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,23 +27,9 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 class OTPVerification(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="otp_verification")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otp_verification")
     otp = models.CharField(max_length=6)
     otp_expires_at = models.DateTimeField(default=defaultExpiry)
 
     def is_expired(self):
         return now() > self.otp_expires_at
-    
-class BillingDetails(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='billing_details')
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    country = models.CharField(max_length=50)
-    company_name = models.CharField(max_length=255, null=True, blank=True)
-    street_address = models.CharField(max_length=500)
-    appartment = models.CharField(max_length=255, null=True, blank=True)
-    city = models.CharField(max_length=50)
-    state = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=6)
-    phone = models.CharField(max_length=13)

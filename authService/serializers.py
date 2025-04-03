@@ -78,19 +78,19 @@ class UserLoginSerializer(serializers.Serializer):
             "msg": "Login Successful...",
             "token": token
         }
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'isVerified', 'isProfileComplete']
-
-
+    
 class BillingDetailsSerailizer(serializers.ModelSerializer):
     class Meta:
         model = BillingDetails
-        fields = "__all__"
+        exclude = ["user"]
         extra_kwargs= {'user': {'read_only': True}}
 
         def create(self, validated_data):
             user = self.context.get('user')
             return BillingDetails.objects.create(user=user, **validated_data)
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    billing=BillingDetailsSerailizer(source="default_billing_address",read_only=True)
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','email','phone', 'billing','isVerified',]
