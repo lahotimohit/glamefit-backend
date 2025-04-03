@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 import os
 
 load_dotenv()
@@ -13,9 +14,13 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+DB_URL = os.getenv("POSTGRES_DB_URL")
+
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'authService.User'
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -85,11 +90,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'glamefitBackend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+url = urlparse(DB_URL)
+
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
+else:
+    DATABASES = {
+        'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': url.path[1:],
+        'USER': url.username,
+        'PASSWORD': url.password,
+        'HOST': url.hostname,
+        'PORT': url.port,
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
