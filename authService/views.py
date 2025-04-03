@@ -13,6 +13,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.conf import settings
 from django.db import transaction
 from . import serializers
+from .models import BillingDetails
 
 class GoogleLoginView(APIView):
     permission_classes = [AllowAny]
@@ -127,3 +128,49 @@ class GoogleLoginAPIView(APIView):
         )
         return Response({"google_login_url": google_login_url})
     
+
+class BillingDetailsAPIView(APIView):
+    permission_classes=[IsAuthenticated]
+    def post(self, request):
+        serializer=serializers.BillingDetailsSerailizer(data=request.data, context={'user':request.user})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(user=request.user)
+            return Response({"message": "Details saved successfully...."}, status=201)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request):
+        try:
+            addresses = BillingDetails.objects.filter(user=request.user)
+            serialized_data = serializers.BillingDetailsSerailizer(addresses, many=True)
+            return Response(serialized_data.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request):
+        billing_id = request.data.get("billing_id")
+        if not billing_id:
+            return Response({'error': "billing_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        billing_detail = BillingDetails.objects.filter(id=billing_id, user=request.user).first()
+        if not billing_detail:
+            return Response({'error': "Billing detail not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        billing_detail.delete()
+        return Response({"message": "Billing detail deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request):
+        billing_id = request.data.get("billing_id")
+        if not billing_id:
+            return Response({'error': "billing_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        billing_detail = BillingDetails.objects.filter(id=billing_id, user=request.user).first()
+        if not billing_detail:
+            return Response({'error': "Billing detail not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = serializers.BillingDetailsSerailizer(billing_detail, data=request.data, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({"message": "Billing detail updated successfully."}, status=status.HTTP_200_OK)
+
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

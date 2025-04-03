@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed 
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
-from .models import User, OTPVerification
+from .models import User, OTPVerification, BillingDetails
 from .utils import get_tokens_for_user
 import random
 
@@ -12,11 +12,14 @@ class GoogleAuthSerializer(serializers.Serializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'password']
+        fields = ['first_name','last_name','email','phone','password']
 
     def create(self, validated_data):
         user = User.objects.create(
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
             email=validated_data['email'],
+            phone=validated_data['phone'],
             password=validated_data['password'],
             isVerified=False
         )
@@ -80,3 +83,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'isVerified', 'isProfileComplete']
+
+
+class BillingDetailsSerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = BillingDetails
+        fields = "__all__"
+        extra_kwargs= {'user': {'read_only': True}}
+
+        def create(self, validated_data):
+            user = self.context.get('user')
+            return BillingDetails.objects.create(user=user, **validated_data)

@@ -10,8 +10,8 @@ def defaultExpiry():
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     email = models.EmailField(unique=True, blank=False, null=False)
+    phone = models.CharField(max_length=13, unique=True)
     isVerified = models.BooleanField(default=False)
-    isProfileComplete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -30,3 +30,17 @@ class OTPVerification(models.Model):
 
     def is_expired(self):
         return now() > self.otp_expires_at
+    
+class BillingDetails(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='billing_details')
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    country = models.CharField(max_length=50)
+    company_name = models.CharField(max_length=255, null=True, blank=True)
+    street_address = models.CharField(max_length=500)
+    appartment = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=50)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=6)
+    phone = models.CharField(max_length=13)
