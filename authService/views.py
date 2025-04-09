@@ -24,7 +24,7 @@ class RequestPasswordResetView(APIView):
         try:
             user = User.objects.get(email=email)
             token = default_token_generator.make_token(user)
-            reset_link = f"https://glame-fit-website-ui.vercel.app//auth/reset-password/{user.id}/{token}/"
+            reset_link = f"https://glamefit.netlify.app/auth/newPassword/{user.id}/{token}/"
 
             send_mail(
                 "Password Reset Request",
