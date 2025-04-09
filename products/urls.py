@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import ProductListView, WishlistListView, manage_wishlist
+from .views import WishlistListView, manage_wishlist, ProductDetailView
 
 urlpatterns = [
-    path("get-product/", ProductListView.as_view(), name="product-list"),
+    path("get-product/", ProductDetailView.as_view(), name="product-list"),
+    path('product/<uuid:id>/', ProductDetailView.as_view(), name='product-detail'),
     path("wishlist/", WishlistListView.as_view(), name="wishlist"),
     path("wishlist/manage/", manage_wishlist, name="wishlist-manage"),
 ]

@@ -12,13 +12,33 @@ class InfiniteScrollPagination(LimitOffsetPagination):
     max_limit = 50
 
 
-class ProductListView(generics.ListAPIView):
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+import uuid
+
+class ProductDetailView(generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     pagination_class = InfiniteScrollPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ["gender", "article_type","base_colour","sub_category"]
+    filterset_fields = ["gender", "article_type", "base_colour", "sub_category"]
     ordering_fields = ["product_display_name"]
+    lookup_field = "id" 
+
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('id')
+        if product_id is not None:
+            return self.retrieve(request, *args, **kwargs)
+        else:
+            return self.list(request, *args, **kwargs)
+
+    def get_object(self):
+        product_id = self.kwargs.get(self.lookup_field)
+        try:
+            return self.queryset.get(id=product_id)
+        except (ValueError, Product.DoesNotExist):
+            raise generics.Http404("No product found with this ID")
 
 @api_view(["POST", "DELETE"])
 @permission_classes([permissions.IsAuthenticated])
