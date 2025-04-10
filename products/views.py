@@ -1,11 +1,13 @@
 from rest_framework import generics, filters, permissions
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.decorators import api_view, permission_classes
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from .models import Product, Wishlist
 from .serialzers import ProductSerializer, WishlistSerializer
+import requests
 
 class InfiniteScrollPagination(LimitOffsetPagination):
     default_limit = 12
@@ -63,6 +65,58 @@ def manage_wishlist(request):
             wishlist_item.delete()
             return Response({"msg": "Item removed successfully..."}, status=200)
         return Response({"error": "Item not found in wishlist..."}, status=404)
+
+
+class ProductRecommendationView(APIView):
+    def post(self, request):
+        try:
+            image_url = request.data.get('image_url')
+            category = request.data.get('category')
+            
+            if not image_url or not category:
+                return Response(
+                    {'error': 'image_url and category are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            recommendation_url = "https://mohit112233-recsys-cross.hf.space/recommend"
+            payload = {
+                'category': category,
+                'file': image_url
+            }
+            response = requests.post(recommendation_url, data=payload)
+            print(response)
+            response.raise_for_status()
+            
+            recommendations = response.json().get('recommendations', [])
+            product_ids = [rec['product_id'] for rec in recommendations]
+            
+            products = Product.objects.filter(
+                imageURL__in=[f"https://huggingface.co/datasets/mohit112233/recsys-dataset/resolve/main/images/{pid}.jpg" 
+                            for pid in product_ids]
+            ).values(
+                'id',
+                'gender',
+                'article_type',
+                'base_colour',
+                'product_display_name',
+                'imageURL'
+            )
+            response_data = {
+                'recommendations': list(products),
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {'error': f'Failed to process request: {str(e)}'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'An error occurred: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 class WishlistListView(generics.ListAPIView):
     serializer_class=WishlistSerializer
